@@ -9,7 +9,7 @@ import numpy as np
 from judo import MODEL_PATH
 from judo.gui import slider
 from judo.tasks.base import Task, TaskConfig
-from judo.utils.math_utils import quat_diff, quat_diff_so3
+from judo.utils.math_utils import axis_angle_diff, quat_diff, quat_diff_so3
 
 XML_PATH = str(MODEL_PATH / "xml/leap_cube.xml")
 SIM_XML_PATH = str(MODEL_PATH / "xml/leap_cube_sim.xml")
@@ -113,6 +113,20 @@ class LeapCube(Task[LeapCubeConfig]):
                 np.sqrt(uvw[0]) * np.cos(2 * np.pi * uvw[2]),
             ]
         )
+        angle, _ = axis_angle_diff(self.goal_quat, goal_quat)
+
+        # ensure goal quat is sufficiently far from current goal
+        while angle < np.pi / 2:
+            uvw = np.random.rand(3)
+            goal_quat = np.array(
+                [
+                    np.sqrt(1 - uvw[0]) * np.sin(2 * np.pi * uvw[1]),
+                    np.sqrt(1 - uvw[0]) * np.cos(2 * np.pi * uvw[1]),
+                    np.sqrt(uvw[0]) * np.sin(2 * np.pi * uvw[2]),
+                    np.sqrt(uvw[0]) * np.cos(2 * np.pi * uvw[2]),
+                ]
+            )
+            angle, _ = axis_angle_diff(self.goal_quat, goal_quat)
         self.data.mocap_quat[0] = goal_quat
         self.goal_quat = goal_quat
 
